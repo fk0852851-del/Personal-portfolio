@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mohammad Fahad Khan - 3D Portfolio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel Compiler -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Three.js 3D Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @keyframes pulse-slow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 0.9; }
+    }
+    .animate-pulse-slow {
+      animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-950 relative overflow-x-hidden">
+  
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const USER_DATA = {
+      name: "Mohammad Fahad Khan",
+      title: "Full Stack Developer & AI Enthusiast",
+      age: 20,
+      location: "Udaipur, Rajasthan, India",
+      course: "Bachelor of Computer Applications (BCA)",
+      status: "Currently Pursuing",
+      email: "fk764422@gmail.com",
+      phone: "+91 6376373196",
+      linkedin: "https://www.linkedin.com/in/mohammad-fahad-khan-26bb29395",
+      github: "https://github.com/fk0852851-del",
+      summary: "Motivated and enthusiastic BCA student with expertise in Full Stack Web Development and strong English communication skills. Passionate about building robust software, exploring AI applications, and solving complex real-world problems through clean code and scalable design.",
+      objective: "To work in a challenging organization where I can apply my technical knowledge, enhance my development skills, and contribute to innovative software solutions while continuously mastering cutting-edge technologies."
+    };
+
+    const SKILLS = [
+      { name: "React.js", category: "Frontend", level: 90, color: "from-cyan-400 to-blue-500", icon: "⚛️" },
+      { name: "Node.js", category: "Backend", level: 85, color: "from-green-400 to-emerald-600", icon: "🟢" },
+      { name: "Express.js", category: "Backend", level: 82, color: "from-gray-400 to-gray-600", icon: "🚀" },
+      { name: "MongoDB", category: "Database", level: 80, color: "from-emerald-500 to-teal-700", icon: "🍃" },
+      { name: "JavaScript (ES6+)", category: "Language", level: 88, color: "from-yellow-400 to-amber-500", icon: "⚡" },
+      { name: "HTML5 / CSS3", category: "Frontend", level: 92, color: "from-orange-400 to-red-500", icon: "🎨" },
+      { name: "REST APIs", category: "Backend", level: 86, color: "from-purple-400 to-indigo-600", icon: "🔗" },
+      { name: "Git & GitHub", category: "Tools", level: 85, color: "from-orange-500 to-red-600", icon: "🐙" },
+      { name: "Tailwind CSS", category: "Frontend", level: 88, color: "from-cyan-300 to-teal-400", icon: "💨" },
+      { name: "Problem Solving", category: "Soft Skills", level: 90, color: "from-pink-500 to-rose-600", icon: "🧩" },
+      { name: "Team Leadership", category: "Soft Skills", level: 85, color: "from-amber-400 to-orange-500", icon: "👥" },
+      { name: "English Comm.", category: "Soft Skills", level: 92, color: "from-violet-400 to-purple-600", icon: "🗣️" },
+    ];
+
+    const PROJECTS = [
+      {
+        id: "seva-path",
+        title: "SEVA PATH",
+        badge: "Healthcare & Navigation",
+        description: "OPD patient slip queue system and digital hospital navigation web app featuring dual themes, quick room finder, and real-time patient queue status updates.",
+        tech: ["React.js", "MongoDB", "Express.js", "Node.js", "CSS3 Canvas"],
+        github: "https://github.com/fk0852851-del",
+        gradient: "from-emerald-500/20 via-teal-500/10 to-transparent",
+        border: "border-emerald-500/40",
+        glow: "shadow-emerald-500/20"
+      },
+      {
+        id: "hackathon-ai",
+        title: "Hackathon AI Suite",
+        badge: "AI & Full Stack",
+        description: "Responsive full-stack web app prototype built during hackathons featuring modern UI interfaces, stateful backend API workflows, and smart search integrations.",
+        tech: ["React.js", "REST APIs", "Node.js", "Tailwind CSS", "Git"],
+        github: "https://github.com/fk0852851-del",
+        gradient: "from-purple-500/20 via-pink-500/10 to-transparent",
+        border: "border-purple-500/40",
+        glow: "shadow-purple-500/20"
+      },
+      {
+        id: "responsive-web-app",
+        title: "Interactive Web Interfaces",
+        badge: "Frontend Architecture",
+        description: "Full-stack web application templates featuring smooth glassmorphic interfaces, high-performance component architecture, and responsive dynamic dashboards.",
+        tech: ["React.js", "JavaScript ES6+", "Tailwind CSS", "REST APIs"],
+        github: "https://github.com/fk0852851-del",
+        gradient: "from-cyan-500/20 via-blue-500/10 to-transparent",
+        border: "border-cyan-500/40",
+        glow: "shadow-cyan-500/20"
+      }
+    ];
+
+    function PortfolioApp() {
+      const [activeTab, setActiveTab] = useState('hero');
+      const [copied, setCopied] = useState({ email: false, phone: false });
+      const [canvas3dActive, setCanvas3dActive] = useState(true);
+      const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+      const [formSent, setFormSent] = useState(false);
+
+      const mountRef = useRef(null);
+      const sceneRef = useRef(null);
+      const rendererRef = useRef(null);
+
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+
+      useEffect(() => {
+        if (!mountRef.current || !canvas3dActive) return;
+
+        const scene = new THREE.Scene();
+        sceneRef.current = scene;
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 15;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        rendererRef.current = renderer;
+
+        mountRef.current.innerHTML = '';
+        mountRef.current.appendChild(renderer.domElement);
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const icoGeometry = new THREE.IcosahedronGeometry(4, 1);
+        const icoMaterial = new THREE.MeshPhongMaterial({
+          color: 0x06b6d4,
+          wireframe: true,
+          emissive: 0x0284c7,
+          emissiveIntensity: 0.3,
+          shininess: 100
+        });
+        const icoMesh = new THREE.Mesh(icoGeometry, icoMaterial);
+        group.add(icoMesh);
+
+        const coreGeo = new THREE.OctahedronGeometry(2, 0);
+        const coreMat = new THREE.MeshStandardMaterial({
+          color: 0x8b5cf6,
+          roughness: 0.2,
+          metalness: 0.8,
+          emissive: 0x6d28d9,
+          emissiveIntensity: 0.6
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        group.add(coreMesh);
+
+        const particlesCount = 800;
+        const posArray = new Float32Array(particlesCount * 3);
+        for (let i = 0; i < particlesCount * 3; i += 3) {
+          const radius = 8 + Math.random() * 12;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos((Math.random() * 2) - 1);
+          posArray[i] = radius * Math.sin(phi) * Math.cos(theta);
+          posArray[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
+          posArray[i + 2] = radius * Math.cos(phi);
+        }
+        const particlesGeo = new THREE.BufferGeometry();
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.08, color: 0x38bdf8, transparent: true, opacity: 0.8 });
+        const particlesMesh = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particlesMesh);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0x06b6d4, 2, 50);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xec4899, 2, 50);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+
+        let mouseX = 0, mouseY = 0;
+        const handleMouseMove = (e) => {
+          mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+          mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+
+        const handleResize = () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
+        };
+        window.addEventListener('resize', handleResize);
+
+        let animationFrameId;
+        const animate = () => {
+          animationFrameId = requestAnimationFrame(animate);
+          group.rotation.x += 0.005;
+          group.rotation.y += 0.0075;
+          coreMesh.rotation.x -= 0.01;
+          coreMesh.rotation.y -= 0.01;
+          particlesMesh.rotation.y -= 0.001;
+
+          group.position.x += (mouseX * 2 - group.position.x) * 0.05;
+          group.position.y += (-mouseY * 2 - group.position.y) * 0.05;
+
+          renderer.render(scene, camera);
+        };
+        animate();
+
+        return () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('resize', handleResize);
+          cancelAnimationFrame(animationFrameId);
+          if (mountRef.current && renderer.domElement) {
+            mountRef.current.removeChild(renderer.domElement);
+          }
+          renderer.dispose();
+        };
+      }, [canvas3dActive]);
+
+      const copyToClipboard = (text, type) => {
+        navigator.clipboard.writeText(text);
+        setCopied(prev => ({ ...prev, [type]: true }));
+        setTimeout(() => setCopied(prev => ({ ...prev, [type]: false })), 2000);
+      };
+
+      const handleContactSubmit = (e) => {
+        e.preventDefault();
+        if (!formData.name || !formData.email || !formData.message) return;
+        setFormSent(true);
+        setTimeout(() => {
+          setFormData({ name: '', email: '', message: '' });
+          setFormSent(false);
+        }, 4000);
+      };
+
+      return (
+        <div>
+          {canvas3dActive && (
+            <div ref={mountRef} className="fixed inset-0 z-0 pointer-events-none opacity-60"></div>
+          )}
+
+          <div className="fixed top-0 left-1/4 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+          <div className="fixed bottom-10 right-10 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none z-0"></div>
+
+          <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-8 py-4">
+            <nav className="max-w-7xl mx-auto flex items-center justify-between">
+              <div onClick={() => setActiveTab('hero')} className="cursor-pointer flex items-center gap-3 group">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-black text-xl text-slate-950 shadow-lg shadow-cyan-500/30 group-hover:scale-105 transition-transform">
+                  FK
+                </div>
+                <div>
+                  <h1 className="font-bold text-sm sm:text-base leading-none text-slate-100 group-hover:text-cyan-400 transition-colors">
+                    {USER_DATA.name}
+                  </h1>
+                  <p className="text-[11px] text-slate-400 font-mono mt-1">BCA • Full Stack Developer</p>
+                </div>
+              </div>
+
+              <div className="hidden md:flex items-center gap-1 bg-slate-900/90 p-1.5 rounded-full border border-slate-800">
+                {['about', 'skills', 'projects', 'contact'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => {
+                      setActiveTab(tab);
+                      const el = document.getElementById(tab);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-medium capitalize transition-all ${
+                      activeTab === tab
+                        ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold shadow-md shadow-cyan-500/20'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCanvas3dActive(!canvas3dActive)}
+                className={`p-2 rounded-xl border transition-all ${
+                  canvas3dActive ? 'bg-cyan-500/10 border-cyan-500/40 text-cyan-400' : 'bg-slate-800/60 border-slate-700 text-slate-400'
+                }`}
+              >
+                <i data-lucide="sparkles" className="w-4 h-4"></i>
+              </button>
+            </nav>
+          </header>
+
+          <main className="relative z-10 pt-24 pb-16 px-4 sm:px-8 max-w-7xl mx-auto space-y-24">
+            
+            {/* HERO */}
+            <section id="hero" className="min-h-[80vh] flex flex-col justify-center items-start pt-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono mb-6">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+                Open for Software Dev Opportunities
+              </div>
+
+              <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight mb-4">
+                Hi, I'm <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">{USER_DATA.name}</span>
+              </h1>
+
+              <p className="text-lg sm:text-xl text-slate-300 max-w-2xl font-light mb-8 leading-relaxed">
+                {USER_DATA.title} based in <span className="text-cyan-300 font-normal">{USER_DATA.location}</span>.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 mb-10">
+                <a
+                  href="#contact"
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/25 hover:scale-[1.02] transition-all flex items-center gap-2"
+                >
+                  Get In Touch <i data-lucide="send" className="w-4 h-4"></i>
+                </a>
+                <a
+                  href={USER_DATA.github}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-5 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-sm font-medium hover:bg-slate-800 transition-all flex items-center gap-2"
+                >
+                  <i data-lucide="github" className="w-4 h-4"></i> GitHub
+                </a>
+                <a
+                  href={USER_DATA.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-5 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-200 text-sm font-medium hover:bg-slate-800 transition-all flex items-center gap-2"
+                >
+                  <i data-lucide="linkedin" className="w-4 h-4"></i> LinkedIn
+                </a>
+              </div>
+            </section>
+
+            {/* ABOUT */}
+            <section id="about" className="scroll-mt-24 space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                <i data-lucide="user" className="text-cyan-400"></i> About & Summary
+              </h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl space-y-4">
+                  <h3 className="text-lg font-bold text-cyan-400">Professional Summary</h3>
+                  <p className="text-slate-300 text-sm leading-relaxed">{USER_DATA.summary}</p>
+                </div>
+                <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-xl space-y-4">
+                  <h3 className="text-lg font-bold text-purple-400">Career Objective</h3>
+                  <p className="text-slate-300 text-sm leading-relaxed">{USER_DATA.objective}</p>
+                </div>
+              </div>
+            </section>
+
+            {/* SKILLS */}
+            <section id="skills" className="scroll-mt-24 space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                <i data-lucide="code" className="text-cyan-400"></i> Skills Matrix
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {SKILLS.map((s, i) => (
+                  <div key={i} className="p-5 rounded-xl bg-slate-900/50 border border-slate-800/80 backdrop-blur-xl">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="font-semibold text-sm text-slate-200">{s.icon} {s.name}</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">{s.category}</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div className={`h-full bg-gradient-to-r ${s.color}`} style={{ width: `${s.level}%` }}></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* PROJECTS */}
+            <section id="projects" className="scroll-mt-24 space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                <i data-lucide="terminal" className="text-cyan-400"></i> Featured Projects
+              </h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                {PROJECTS.map((p) => (
+                  <div key={p.id} className={`p-6 rounded-2xl bg-slate-900/80 border ${p.border} flex flex-col justify-between`}>
+                    <div>
+                      <span className="inline-block px-3 py-1 rounded-full bg-slate-800/80 text-cyan-400 text-xs font-mono mb-4">{p.badge}</span>
+                      <h3 className="text-xl font-bold text-white mb-2">{p.title}</h3>
+                      <p className="text-slate-300 text-xs leading-relaxed mb-6">{p.description}</p>
+                    </div>
+                    <a href={p.github} target="_blank" rel="noreferrer" className="py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 hover:bg-slate-800">
+                      <i data-lucide="github" className="w-4 h-4"></i> GitHub Repository
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* CONTACT */}
+            <section id="contact" className="scroll-mt-24 space-y-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+                <i data-lucide="mail" className="text-cyan-400"></i> Get In Touch
+              </h2>
+              <div className="grid md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-mono block">Email</span>
+                      <span className="text-xs font-semibold text-slate-200">{USER_DATA.email}</span>
+                    </div>
+                    <button onClick={() => copyToClipboard(USER_DATA.email, 'email')} className="p-2 rounded-lg bg-slate-800 text-xs">
+                      {copied.email ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                  <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-mono block">Phone</span>
+                      <span className="text-xs font-semibold text-slate-200">{USER_DATA.phone}</span>
+                    </div>
+                    <button onClick={() => copyToClipboard(USER_DATA.phone, 'phone')} className="p-2 rounded-lg bg-slate-800 text-xs">
+                      {copied.phone ? 'Copied!' : 'Copy'}
+                    </button>
+                  </div>
+                </div>
+
+                <form onSubmit={handleContactSubmit} className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Your Name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder="Your Email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                  <textarea
+                    required
+                    rows="4"
+                    placeholder="Your Message..."
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 resize-none"
+                  ></textarea>
+                  <button type="submit" className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-xs">
+                    {formSent ? 'Message Sent!' : 'Send Message'}
+                  </button>
+                </form>
+              </div>
+            </section>
+
+          </main>
+
+          <footer className="border-t border-slate-800/80 bg-slate-950/90 py-8 text-center text-xs text-slate-500">
+            © {new Date().getFullYear()} Mohammad Fahad Khan • All rights reserved.
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<PortfolioApp />);
+  </script>
+</body>
+</html>
